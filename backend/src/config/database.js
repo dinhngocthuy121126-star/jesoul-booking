@@ -229,11 +229,17 @@ const sqlProxy = new Proxy(activeSql, {
 
 async function autoMigratePostgres(pgPool) {
   try {
-    const sqlPath = path.join(__dirname, '../../../database/init_postgres.sql');
-    if (fs.existsSync(sqlPath)) {
+    const candidatePaths = [
+      path.join(__dirname, 'init_postgres.sql'),
+      path.join(__dirname, '../../../database/init_postgres.sql'),
+      path.join(process.cwd(), 'database/init_postgres.sql'),
+      path.join(process.cwd(), 'init_postgres.sql')
+    ];
+    const sqlPath = candidatePaths.find(p => fs.existsSync(p));
+    if (sqlPath) {
       const ddl = fs.readFileSync(sqlPath, 'utf8');
       await pgPool.query(ddl);
-      console.log('[PostgreSQL] Database tables & seed data initialized successfully.');
+      console.log(`[PostgreSQL] Database tables & seed data initialized successfully.`);
     }
   } catch (err) {
     console.warn('[PostgreSQL] Auto-migration notice:', err.message);
